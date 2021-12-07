@@ -41,6 +41,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .password(passwordEncoder.encode("1234"))
                 .roles("STUDENT")
                 .build();
-        return new InMemoryUserDetailsManager(renanBueno); //Retorna o user "construído", mas sem o encodar a senha.
+        UserDetails fernandaMarie = User.builder()
+                .username("fernanda")
+                .password(passwordEncoder.encode("fernanda"))
+                .roles("ADMIN")
+                .build();
+        return new InMemoryUserDetailsManager(
+                renanBueno,
+                fernandaMarie); //Retorna o user "construído", mas sem o encodar a senha.
     }
 }
