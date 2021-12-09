@@ -2,7 +2,7 @@ package renan.springsecurity.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -11,11 +11,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-import static renan.springsecurity.security.UserPermission.*;
+import java.util.concurrent.TimeUnit;
+
 import static renan.springsecurity.security.UserRole.*;
 
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final PasswordEncoder passwordEncoder;
@@ -28,18 +31,30 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
+//                .csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and()
                 .csrf().disable()
                 .authorizeRequests() //Autorizar as requisições.
                 .antMatchers("/", "index", "/css/*", "/js/*").permitAll()  //Permitir todas as request que estão definidas entre parênteses.
                 .antMatchers("/api/**").hasRole(STUDENT.name())
-                .antMatchers(HttpMethod.DELETE, "/management/api/**").hasAuthority(COURSE_WRITE.getPermissions())  //A ordem dos "antMatchers" importa. Muito importante colocar na ordem correta para não ter sobrescrita de autorizações.
-                .antMatchers(HttpMethod.POST, "/management/api/**").hasAuthority(COURSE_WRITE.getPermissions())
-                .antMatchers(HttpMethod.PUT, "/management/api/**").hasAuthority(COURSE_WRITE.getPermissions())
-                .antMatchers(HttpMethod.GET,"/management/api/**").hasAnyRole(ADMIN.name(), ADMIN_TRAINE.name())
                 .anyRequest()       //Qualquer requisição
                 .authenticated()     //No qual devem ser autenticadas
                 .and()               //E...
-                .httpBasic();        //E o mecanismo de autenticação da página será o básico (janela pop-up).
+                .formLogin()
+                    .loginPage("/login")
+                    .permitAll()
+                    .defaultSuccessUrl("/courses", true)
+                .and()
+                .rememberMe()
+                    .tokenValiditySeconds((int) TimeUnit.DAYS.toSeconds(21))
+                    .key("algomuitoseguro")
+                .and()
+                .logout()
+                    .logoutUrl("/logout")
+                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
+                    .clearAuthentication(true)
+                    .invalidateHttpSession(true)
+                    .deleteCookies("JSESSIONID", "remember-me", "Idea-4637f4b6", "XSRF-TOKEN")
+                    .logoutSuccessUrl("/login");        //E o mecanismo de autenticação da página será o básico (janela pop-up).
     }
 
     @Override
@@ -55,12 +70,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .username("fernanda")
                 .password(passwordEncoder.encode("fernanda"))
 //                .roles(STUDENT.name())
-                .authorities(ADMIN_TRAINE.getGrantedAuthorities())
+                .authorities(ADMIN_TRAINEE.getGrantedAuthorities())
                 .build();
         UserDetails rafaelBueno = User.builder()
                 .username("rafael")
                 .password(passwordEncoder.encode("fernanda"))
-//                .roles(ADMIN_TRAINE.name())
+//                .roles(ADMIN_TRAINEE.name())
                 .authorities(STUDENT.getGrantedAuthorities())
                 .build();
         return new InMemoryUserDetailsManager(
