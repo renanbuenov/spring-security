@@ -11,12 +11,13 @@ import java.util.List;
 controlador está fornecendo serviços REST com o tipo da resposta JSON/XML.*/
 @RestController
 //Usada para mapear solicitações da 'web' para classes manipuladoras específicas e métodos manipuladores.
-@RequestMapping("/students")
+@RequestMapping("api/students")
 public class StudentController {
 //Lista criada para instanciar e mocar dados dentro da classe 'Student'.
     private static final List<Student> students = Arrays.asList(
             new Student(1, "Renan"),
-            new Student(2, "Fernanda")
+            new Student(2, "Fernanda"),
+            new Student(3, "Rafael")
     );
 //Método para pegar cada student, dentro da lista 'students' e encontrar através da request "GET".
     @GetMapping(path = "{studentId}")
